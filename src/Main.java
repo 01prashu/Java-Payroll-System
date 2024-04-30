@@ -1,5 +1,8 @@
 
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import  java.sql.DriverManager;
+import java.sql.Connection;
 
 abstract class Employee{
     private String Emp_Name;
@@ -18,6 +21,7 @@ abstract class Employee{
     public int get_id(){
         return this.Emp_Id;
     }
+
     public void set_emp_name(String name)
     {
         this.Emp_Name = name;
@@ -36,8 +40,8 @@ abstract class Employee{
 }
 
 class FullTimeEmployee extends Employee {
-    private double monthlysalary;
-    FullTimeEmployee(String name , int id , double salary)
+    private int monthlysalary;
+    FullTimeEmployee(String name , int id , int salary)
     {
         super(name, id);
         this.monthlysalary = salary;
@@ -47,8 +51,8 @@ class FullTimeEmployee extends Employee {
     {
         return monthlysalary;
     }
+    int get_salary(){return this.monthlysalary;}
 }
-
 
 class PartTimeEmployee extends Employee{
     private double hoursRate;
@@ -64,6 +68,7 @@ class PartTimeEmployee extends Employee{
     {
         return (this.hoursRate*this.hoursWorked);
     }
+    public  int get_hours_work(){return  (this.hoursWorked);}
 }
 
 
@@ -104,26 +109,52 @@ class PayrollSystem{
 }
 
 public class Main {
+    static final String name="root";
+    static final String password="prashant@123";
+    static final String url="jdbc:mysql://127.0.0.1:3306/employee";
+
     public static void main(String[]arg)
     {
-        PayrollSystem payrollsystem = new PayrollSystem();
+        try{
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        }
+        catch(ClassNotFoundException e)
+        {
+            System.out.println(e.getMessage());
+        }
 
-        PartTimeEmployee emp1 = new PartTimeEmployee("Karan", 1, 100, 34);
+        try{
+            Connection connection = DriverManager.getConnection(url,name,password);
 
-        PartTimeEmployee emp2 = new PartTimeEmployee("Akash", 2, 150, 44);
+            PayrollSystem payrollsystem = new PayrollSystem();
+            PartTimeEmployee emp1 = new PartTimeEmployee("Karan", 1, 100, 34);
+            FullTimeEmployee emp2 = new FullTimeEmployee("Rohit",1,13000);
+            //            PartTimeEmployee emp2 = new PartTimeEmployee("Akash", 2, 150, 44);
+//            FullTimeEmployee emp3 = new FullTimeEmployee("Vikas", 3, 42000);
+//            FullTimeEmployee emp4 = new FullTimeEmployee("Vinit", 3, 18000);
+            String Query ="INSERT INTO fulltimeemployee VALUES(?,?,?)";
+            PreparedStatement preparedstatement = connection.prepareStatement(Query);
+            preparedstatement.setString(2,emp2.get_emp_name());
+            preparedstatement.setInt(1,emp2.get_id());
+            preparedstatement.setInt(3,emp2.get_salary());
 
 
-        FullTimeEmployee emp3 = new FullTimeEmployee("Vikas", 3, 42000);
+            int row_change = preparedstatement.executeUpdate();
+            if(row_change>0)
+            {
+                System.out.println("Data updated");
+            }
+            payrollsystem.AddEmployee(emp1);
+//            payrollsystem.AddEmployee(emp2);
+//            payrollsystem.AddEmployee(emp3);
+//            payrollsystem.AddEmployee(emp4);
 
-        FullTimeEmployee emp4 = new FullTimeEmployee("Vinit", 3, 18000);
-
-        payrollsystem.AddEmployee(emp1);
-        payrollsystem.AddEmployee(emp2);
-        payrollsystem.AddEmployee(emp3);
-        payrollsystem.AddEmployee(emp4);
-
-        
-        payrollsystem.Display_Employee();
+//
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
 
     }
 }
